@@ -3,43 +3,46 @@
 ### Options:
 # Interrupt - Suggests use of interuptting abilities, including stuns/knockbacks on non-boss targets.
 #
-#
 # Not in Melee Range - Suggests movement abilities if available or a forward arrow if you're out of range.
 #
-#
 # Multiple-targets rotation - If this is disabled, the AoE icon is removed
-#
 #
 # Ashamane's Frenzy as main action - Puts the Ashamane's Frenzy suggestion in the main action box.
 #       Requires TimeToDie of 20 seconds or more
 #       If this is off, Ovale will suggest 2 CP Regrowths in the Short CD box.
+#
 # Shadowmeld as main action - Puts the Shadowmeld suggestion in the main action box.
 #       Requires TimeToDie of 15 seconds or more
 #       Suggested off except on (raid) bosses.
+#
 # Tiger's Fury multiplier prediction - Applies the Tiger's Fury multiplier if Tiger's Fury is ready.
 #       e.g. If TF is being suggested, any Rip suggestions will assume you use TF first.
 #
 # Prevent capping BrS charges - Will suggest Brutal Slash if you are about to reach max charges.
 #       Advantage: Helps not waste charges.  
 #       Disadvantage: Will probably not have 3 charges when AoE for the encounter shows up.
+#
 # BrS at X targets - Minimum number of targets to suggest using Brutal Slash.
 #       This will use all available Brutal Slash charges.
 #       
 # Only suggest BrS when TF is up
 #       Good for Mythic+ to get the most out of your Brutal Slash charges
 #       Too much haste makes this sub-optimal
+#
 # Try to sync Ashamane's Frenzy with Tiger's Fury
 #       Restricts Ashamane's Frenzy to only if Tiger's Fury is up or has more than 10 seconds remaining on the cooldown
 #       
 # Pooling Value - How high you will pool energy (in seconds to max energy)
 #       Lower will pool more agressively (higher energy)
 #       Adds 7 seconds with chatoyant_signet to whatever value
+#
 # Rip - At how many seconds to overwrite a Rip
 #       Default 8
 #
 # Rake - At how many seconds to overwrite a Rake
 #       Default 7 or
 #               3 with Ailuro Pouncers Legendary, Soul of the Forest Talent, or you are not speced into Bloodtalons
+#
 # Savage Roar - At how many seconds to overwrite Savage Roar
 #       Default 11 or
 #               7.2 without Jagged Wounds talent
@@ -51,7 +54,6 @@ Include(ovale_trinkets_wod)
 Include(ovale_druid_spells)
 
 # Temporary Define until Ovale updated
-Define(brutal_slash_talent 21)
 Define(sephuzs_secret 132452)
 Define(kiljaedens_burning_wish 144259)
 
@@ -112,25 +114,24 @@ AddListItem(opt_09_desired_targets desired_targets_09 "BrS at 9 targets" special
 
 
 
-
 ########################################
 ### Helper Variables (Functions)     ###
 ########################################
 
-#variable,name=RakePandemic,value=(15-0.33*15*talent.jagged_wounds.enabled)*0.3
+#variable,name=RakePandemic,value=(15-0.20*15*talent.jagged_wounds.enabled)*0.3
 AddFunction RakePandemic
 {
-    { 15 - 0.33 * 15 * TalentPoints(jagged_wounds_talent) } * 0.3
+    { 15 - 0.20 * 15 * TalentPoints(jagged_wounds_talent) } * 0.3
 }
-#variable,name=RipPandemic,value=(24-0.33*24*talent.jagged_wounds.enabled)*0.3
+#variable,name=RipPandemic,value=(24-0.20*24*talent.jagged_wounds.enabled)*0.3
 AddFunction RipPandemic
 {
-    { 24 - 0.33 * 24 * TalentPoints(jagged_wounds_talent) } * 0.3
+    { 24 - 0.20 * 24 * TalentPoints(jagged_wounds_talent) } * 0.3
 }
-#variable,name=ThrashCatPandemic,value=(15-0.33*15*talent.jagged_wounds.enabled)*0.3
+#variable,name=ThrashCatPandemic,value=(15-0.20*15*talent.jagged_wounds.enabled)*0.3
 AddFunction ThrashCatPandemic
 {
-    { 15 - 0.33 * 15 * TalentPoints(jagged_wounds_talent) } * 0.3
+    { 15 - 0.20 * 15 * TalentPoints(jagged_wounds_talent) } * 0.3
 }
 #variable,name=RakeRefresh,value=7
 #variable,name=RakeRefresh,value=variable.RakePandemic,if=equipped.ailuro_pouncers|talent.soul_of_the_forest.enabled|!talent.bloodtalons.enabled
@@ -179,9 +180,10 @@ AddFunction SavageRoarRefresh
         if List(opt_12_savage_roar_refresh savage_roar_15) 15
     }
     if Talent(jagged_wounds_talent) 11
+	
     7.2
 }
-#variable,name=PoolingValue,value=3
+#variable,name=PoolingValue,value=75
 #variable,name=PoolingValue,value=10,if=equipped.chatoyant_signet
 AddFunction PoolingValue
 {
@@ -497,12 +499,12 @@ AddFunction Regrowth_SavageRoar_Down
         and BuffExpires(savage_roar_buff) 
         and ComboPoints() == 5
 }
-#variable,name=SavageRoar_Down,value=buff.savage_roar.down&(variable.FinisherConditions|time<8)
+#variable,name=SavageRoar_Down,value=buff.savage_roar.down&(variable.FinisherConditions|time<12)
 #savage_roar,if=variable.SavageRoar_Down
 AddFunction SavageRoar_Down
 {
     BuffExpires(savage_roar_buff) 
-        and { FinisherConditions() or TimeInCombat() < 8 }
+        and { FinisherConditions() or TimeInCombat() < 12 }
 }
 #variable,name=Regrowth_Pouncers,value=equipped.ailuro_pouncers&talent.bloodtalons.enabled&(buff.predatory_swiftness.stack>2|(buff.predatory_swiftness.stack>1&dot.rake.remains<3))&buff.bloodtalons.down
 #regrowth,if=variable.Regrowth_Pouncers
@@ -594,11 +596,11 @@ AddFunction FerociousBite_9SecondRefresh
         and target.DebuffRemaining(rip_debuff) < RipRefresh() 
         and target.HealthPercent() < ExecuteRange()
 }
-#variable,name=SavageRoar_Main,value=(buff.savage_roar.remains<=7.2|(buff.savage_roar.remains<variable.SavageRoarRefresh&target.health.pct>=variable.ExecuteRange))
+#variable,name=SavageRoar_Main,value=(buff.savage_roar.remains<=11|(buff.savage_roar.remains<variable.SavageRoarRefresh&target.health.pct>=variable.ExecuteRange))
 #savage_roar,if=variable.SavageRoar_Main
 AddFunction SavageRoar_Main
 {
-    BuffRemaining(savage_roar_buff) <= 7.2 
+    BuffRemaining(savage_roar_buff) <= 11
         or BuffRemaining(savage_roar_buff) < SavageRoarRefresh() and target.HealthPercent() >= ExecuteRange()
 }
 #variable,name=Maim_Main,value=buff.fiery_red_maimers.up&variable.BuffSavageRoarUp&variable.BuffBloodtalonsUp
@@ -847,7 +849,7 @@ AddFunction FeralFinishersMainActions
             if Energy() >= EnergyCost(ferocious_bite max=1) and FerociousBite_9SecondRefresh() Spell(ferocious_bite text=Refresh)
             unless Energy() >= EnergyCost(ferocious_bite max=1) and FerociousBite_9SecondRefresh() and SpellUsable(ferocious_bite) and SpellCooldown(ferocious_bite) < TimeToEnergyFor(ferocious_bite)
             {
-                #variable,name=SavageRoar_Main,value=(buff.savage_roar.remains<=7.2|(buff.savage_roar.remains<variable.SavageRoarRefresh&target.health.pct>=variable.ExecuteRange))
+                #variable,name=SavageRoar_Main,value=(buff.savage_roar.remains<=11|(buff.savage_roar.remains<variable.SavageRoarRefresh&target.health.pct>=variable.ExecuteRange))
                 #pool_resource,for_next=1
                 #savage_roar,if=variable.SavageRoar_Main
                 if SavageRoar_Main() Spell(savage_roar)
@@ -1113,13 +1115,13 @@ AddFunction FeralPrecombatMainActions
     #food,type=nightborne_delicacy_platter
     #augmentation,type=defiled
     #regrowth,if=talent.bloodtalons.enabled
-    # MODIFICATION: Talent(bloodtalons_talent) to Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 15 and BuffExpires(prowl_buff)
-    # REASON: Only suggest Regrowth out of stealth and if there's <15 seconds remaining
-    if Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 15 and BuffExpires(prowl_buff) Spell(regrowth)
+    # MODIFICATION: Talent(bloodtalons_talent) to Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 20 and BuffExpires(prowl_buff)
+    # REASON: Only suggest Regrowth out of stealth and if there's <20 seconds remaining
+    if Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 20 and BuffExpires(prowl_buff) Spell(regrowth)
     #cat_form
     Spell(cat_form)
     #savage_roar
-    if BuffRemaining(savage_roar_buff) < 4 + 4 * ComboPoints() Spell(savage_roar)
+    if BuffRemaining(savage_roar_buff) < 6 + 6 * ComboPoints() Spell(savage_roar)
 }
 
 AddFunction FeralPrecombatMainPostConditions
@@ -1128,11 +1130,11 @@ AddFunction FeralPrecombatMainPostConditions
 
 AddFunction FeralPrecombatShortCdActions
 {
-    # MODIFICATION: Talent(bloodtalons_talent) to Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 15 and BuffExpires(prowl_buff)
-    # REASON: Only suggest Regrowth out of stealth and if there's <15 seconds remaining
+    # MODIFICATION: Talent(bloodtalons_talent) to Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 20 and BuffExpires(prowl_buff)
+    # REASON: Only suggest Regrowth out of stealth and if there's <20 seconds remaining
     # MODIFICATION: Remove `or Spell(cat_form)`
     # REASON: Blocks Prowl from showing up
-    unless Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 15 and BuffExpires(prowl_buff) and Spell(regrowth)
+    unless Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 20 and BuffExpires(prowl_buff) and Spell(regrowth)
     {
         #prowl
         Spell(prowl)
@@ -1141,11 +1143,11 @@ AddFunction FeralPrecombatShortCdActions
 
 AddFunction FeralPrecombatShortCdPostConditions
 {
-    # MODIFICATION: Talent(bloodtalons_talent) to Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 15 and BuffExpires(prowl_buff)
-    # REASON: Only suggest Regrowth out of stealth and if there's <15 seconds remaining
+    # MODIFICATION: Talent(bloodtalons_talent) to Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 20 and BuffExpires(prowl_buff)
+    # REASON: Only suggest Regrowth out of stealth and if there's <20 seconds remaining
     # MODIFICATION: Remove `or Spell(cat_form)`
     # REASON: Blocks Prowl from showing up
-    Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 15 and BuffExpires(prowl_buff) and Spell(regrowth)
+    Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 20 and BuffExpires(prowl_buff) and Spell(regrowth)
 }
 
 AddFunction FeralPrecombatCdActions
@@ -1154,11 +1156,11 @@ AddFunction FeralPrecombatCdActions
 
 AddFunction FeralPrecombatCdPostConditions
 {
-    # MODIFICATION: Talent(bloodtalons_talent) to Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 15 and BuffExpires(prowl_buff)
-    # REASON: Only suggest Regrowth out of stealth and if there's <15 seconds remaining
+    # MODIFICATION: Talent(bloodtalons_talent) to Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 20 and BuffExpires(prowl_buff)
+    # REASON: Only suggest Regrowth out of stealth and if there's <20 seconds remaining
     # MODIFICATION: Remove `or Spell(cat_form)`
     # REASON: Blocks Prowl from showing up
-    Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 15 and BuffExpires(prowl_buff) and Spell(regrowth)
+    Talent(bloodtalons_talent) and BuffRemaining(bloodtalons_buff) < 20 and BuffExpires(prowl_buff) and Spell(regrowth)
 }
 
 ### Feral icons.
@@ -1572,5 +1574,4 @@ AddIcon checkbox=opt_druid_guardian_aoe help=cd specialization=guardian
 # typhoon
 # war_stomp
 # wild_charge
-
 
